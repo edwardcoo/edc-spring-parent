@@ -45,4 +45,9 @@ public class StringUtils {
         return String.valueOf(chars);
     }
 
+    public static void main(String[] args) {
+        String str = "///test/aa////bb///";
+        System.out.println(str.replaceAll("/+","/"));
+    }
+
 }

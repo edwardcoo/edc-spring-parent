@@ -11,4 +11,5 @@ import java.lang.annotation.*;
 public @interface CooRequestParam {
     String value() default "";
     boolean required() default true;
+
 }

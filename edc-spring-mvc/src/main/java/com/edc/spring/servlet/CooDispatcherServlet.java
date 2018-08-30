@@ -31,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CooDispatcherServlet extends HttpServlet {
 
     private final static String seperator = "/";
+    private final static String seperator_regex = "/+";
     private final static String seperator_point = ".";
     private List<String> classNames = new ArrayList<String>();//存放class类
     private Map<String, Object> beansMap = new ConcurrentHashMap<String, Object>();//ioc容器，存放bean instance
@@ -138,10 +139,13 @@ public class CooDispatcherServlet extends HttpServlet {
         for (Map.Entry<String, Object> entry : beansMap.entrySet()) {
             Object instance = entry.getValue();
             Class<?> clazz = instance.getClass();
-            if (clazz.isAnnotationPresent(CooController.class) && clazz.isAnnotationPresent(CooRequestMapping.class)) {
-                CooRequestMapping requestMappingType = clazz.getAnnotation(CooRequestMapping.class);
+            if (clazz.isAnnotationPresent(CooController.class)) {
                 //类基础url
-                List<String> baseUrlList = handlerUrls(requestMappingType.value());
+                List<String> baseUrlList = new ArrayList<String>();
+                if(clazz.isAnnotationPresent(CooRequestMapping.class)){
+                    CooRequestMapping requestMappingType = clazz.getAnnotation(CooRequestMapping.class);
+                    baseUrlList = handlerUrls(requestMappingType.value());
+                }
                 Method[] methods = clazz.getMethods();
                 for (Method method : methods) {
                     if (!method.isAnnotationPresent(CooRequestMapping.class)) {
@@ -183,6 +187,7 @@ public class CooDispatcherServlet extends HttpServlet {
             if (url == null) {
                 continue;
             }
+            url = url.replaceAll(seperator_regex,seperator);
             if (url.startsWith(seperator)) {
                 url = url.substring(1);
             }
@@ -203,7 +208,7 @@ public class CooDispatcherServlet extends HttpServlet {
             try {
                 String name = className.substring(0, className.length() - 6);
                 Class<?> clazz = Class.forName(name);
-                String key = StringUtils.toLowerCaseFirst(clazz.getSimpleName());
+                String key = StringUtils.toLowerCaseFirst(clazz.getSimpleName());//TestServiceImpl==>testServiceImpl
                 Object instance = null;
                 if (clazz.isAnnotationPresent(CooController.class)) {
                     CooController annotation = clazz.getAnnotation(CooController.class);
@@ -244,7 +249,7 @@ public class CooDispatcherServlet extends HttpServlet {
     }
 
 
-    private void doScanPackage(String basePackage) {
+    private void doScanPackage(String basePackage) {//com.edc==>/com/edc
         String scanPath = seperator + basePackage.replaceAll("\\.", seperator);
         URL url = this.getClass().getClassLoader().getResource(scanPath);
         String basePath = url.getFile();
@@ -271,7 +276,7 @@ public class CooDispatcherServlet extends HttpServlet {
         //处理请求
         String uri = req.getRequestURI();
         String contextPath = req.getContextPath();
-        String urlPath = uri.replace(contextPath, "");
+        String urlPath = uri.replace(contextPath, "").replaceAll(seperator_regex,seperator);
         if (!urlPath.startsWith(seperator)) {
             urlPath = seperator + urlPath;
         }
