@@ -21,7 +21,7 @@ public class TestController {
     @CooAutowired
     private TestServiceTwo testServiceTwo;
 
-    @CooRequestMapping("query")
+    @CooRequestMapping({"query","query4"})
     public void query(HttpServletRequest request, HttpServletResponse response, @CooRequestParam("name") String name, @CooRequestParam Integer age) {
         try {
             response.setHeader("Content-type", "text/html;charset=UTF-8");
@@ -45,6 +45,9 @@ public class TestController {
     public String query3(HttpServletRequest request, HttpServletResponse response, @CooRequestParam("name") String name, @CooRequestParam("age") Integer age) {
         String result = testServiceTwo.query(name, age);
         return result;
+    }
+    public static void main(String[] args) {
+        System.out.println(111);
     }
 
 }

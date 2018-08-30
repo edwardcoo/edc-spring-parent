@@ -1,5 +1,6 @@
 package com.edc.spring.servlet;
 
+import com.edc.spring.HandlerMethod;
 import com.edc.spring.annotation.*;
 import com.edc.spring.util.AsmUtils;
 import com.edc.spring.util.StringUtils;
@@ -33,8 +34,7 @@ public class CooDispatcherServlet extends HttpServlet {
     private final static String seperator_point = ".";
     private List<String> classNames = new ArrayList<String>();//存放class类
     private Map<String, Object> beansMap = new ConcurrentHashMap<String, Object>();//ioc容器，存放bean instance
-    private Map<String, Method> handlerMapping = new ConcurrentHashMap<String, Method>();//handlerMapping，存放url-method关系
-    private Map<String, Object> urlInstanceMap = new ConcurrentHashMap<String, Object>();//urlInstanceMap，存放url-instance关系
+    private Map<String, HandlerMethod> handlerMapping = new ConcurrentHashMap<String, HandlerMethod>();//handlerMapping，存放url-method关系
 
     public CooDispatcherServlet() {
         System.out.println("开始启动了...");
@@ -170,8 +170,8 @@ public class CooDispatcherServlet extends HttpServlet {
         if (handlerMapping.containsKey(key)) {
             throw new RuntimeException("repeat url mapping with [" + key + "]");
         }
-        handlerMapping.put(key, method);
-        urlInstanceMap.put(key, instance);
+        HandlerMethod handlerMethod = new HandlerMethod(method,instance);
+        handlerMapping.put(key, handlerMethod);
     }
 
     private List<String> handlerUrls(String[] urls) {
@@ -278,8 +278,12 @@ public class CooDispatcherServlet extends HttpServlet {
         if (!urlPath.endsWith(seperator)) {
             urlPath = urlPath + seperator;
         }
-        Method method = handlerMapping.get(urlPath);
-        Object instance = urlInstanceMap.get(urlPath);
+        HandlerMethod handlerMethod = handlerMapping.get(urlPath);
+        if(handlerMethod == null){
+            throw new RuntimeException("not found handler for url["+urlPath+"]");
+        }
+        Method method = handlerMethod.getMethod();
+        Object instance = handlerMethod.getBean();
         Object[] args = handleMethodParams(req, resp, method);
         try {
             Object result = method.invoke(instance, args);
@@ -363,6 +367,8 @@ public class CooDispatcherServlet extends HttpServlet {
         }
         return value;
     }
-
+    public static void main(String[] args) {
+        System.out.println(111);
+    }
 
 }
